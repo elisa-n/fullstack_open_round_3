@@ -38,8 +38,10 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
-  
+
   next(error)
 }
 
@@ -48,18 +50,24 @@ app.get('/', (req, res) => {
   res.send('<h1>Hello World!</h1>')
 })
 
-app.get('/info', (req, res) => {
-  Person.find({}).then(persons => {
-    let nofPersons = persons.length
-    let time = new Date();
-    res.send(`<div><p>Phonebook has info for ${nofPersons} people</p><p>${time}</p></div>`);
-  })
+app.get('/info', (req, res, next) => {
+  Person.find({})
+    .then(persons => {
+      let nofPersons = persons.length
+      let time = new Date();
+      res.send(`<div><p>Phonebook has info for ${nofPersons} people</p><p>${time}</p></div>`);
+    })
+    .catch(error => {
+      next(error)
+    })
 })
 
-app.get('/api/persons', (req, res) => {
-  Person.find({}).then(persons => {
-    res.json(persons)
-  })
+app.get('/api/persons', (req, res, next) => {
+  Person.find({})
+    .then(persons => {
+      res.json(persons)
+    })
+    .catch(error => next(error))
 })
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -87,7 +95,7 @@ const generateId = () => {
   return id
 }
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const body = req.body
 
   if (!body.name) {
@@ -106,12 +114,14 @@ app.post('/api/persons', (req, res) => {
     id: generateId(),
   })
 
-  person.save().then(savedPerson => {
-    res.json(savedPerson)
-  })
+  person.save()
+    .then(savedPerson => {
+      res.json(savedPerson)
+    })
+    .catch(error => next(error))
 })
 
-app.put('/api/persons/:id', (req, res) => {
+app.put('/api/persons/:id', (req, res, next) => {
   const body = req.body
   const person = {
     name: body.name,
