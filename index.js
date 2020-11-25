@@ -11,11 +11,11 @@ app.use(express.static('build'))
 app.use(express.json())
 
 
-morgan.token('postBody', function (req, res) { 
-  return `{"name":"${req.body.name}", "number":"${req.body.number}"}`});
+morgan.token('postBody', function (req) {
+  return `{"name":"${req.body.name}", "number":"${req.body.number}"}`})
 
 app.use(morgan('tiny', {
-  skip: function(req, res) { 
+  skip: function(req) {
     return (req.method === 'POST')}
 }))
 
@@ -29,11 +29,11 @@ app.use(morgan(function (tokens, req, res) {
     tokens.postBody(req, res)
   ].join(' ')
 }, {
-  skip: function(req, res) { 
+  skip: function(req) {
     return (req.method !== 'POST')}
 }))
 
-const errorHandler = (error, request, response, next) => {
+const errorHandler = (error, _, response, next) => {
   console.error(error.message)
 
   if (error.name === 'CastError') {
@@ -54,8 +54,8 @@ app.get('/info', (req, res, next) => {
   Person.find({})
     .then(persons => {
       let nofPersons = persons.length
-      let time = new Date();
-      res.send(`<div><p>Phonebook has info for ${nofPersons} people</p><p>${time}</p></div>`);
+      let time = new Date()
+      res.send(`<div><p>Phonebook has info for ${nofPersons} people</p><p>${time}</p></div>`)
     })
     .catch(error => {
       next(error)
@@ -74,7 +74,7 @@ app.get('/api/persons/:id', (req, res, next) => {
   Person.findById(req.params.id)
     .then(person => {
       if (person) {
-        res.json(person)    
+        res.json(person)
       } else {
         res.status(404).end()
       }
@@ -84,10 +84,10 @@ app.get('/api/persons/:id', (req, res, next) => {
 
 app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndRemove(req.params.id)
-  .then(result => {
-    res.status(204).end()
-  })
-  .catch(error => next(error))
+    .then(() => {
+      res.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 const generateId = () => {
